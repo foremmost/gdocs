@@ -1,0 +1,54 @@
+extends template/main
+append vars
+	-
+		page_title= 'Home page'
+block content
+	main
+		section.docs(data-click='front:removeChoosedMark')
+			.section
+				.row.main-row
+					button.aside-button
+						span
+					aside.aside
+						-for(let i=0; i < 3;i++)
+							.aside-block
+								h3.aside-title(data-click='front:chooseMenuItem')
+									span.aside-actions
+										button.action-button
+											+img('pluscircle.svg')
+										.aside-actions-list.show
+											button(type='button').aside-btn Add category
+											button(type='button').aside-btn Add page
+									em Basics
+								ul.aside-links
+									li
+										a(href='#') Authorization
+									li
+										a(href='#') Permissions
+					main.main
+						.main-header
+							input(type='search' placeholder='Search').input.search
+						.main-body
+							h2.main-title.item(data-click='front:chooseBlock')
+								span Permissions
+
+							p.main-text.item(data-click='front:chooseBlock')
+								| ShopiApp — fullstack is a web technology company. We solve the problems of clients who are looking
+								| for how to post information about themselves on the Internet. Whether it's an ordinary one-page
+								| website or a large portal with complex functionality and an application.
+							p.main-text.item(data-click='front:chooseBlock')
+								| We also develop applications for popular e-commerce platforms.
+								| We will create the design ourselves, make a prototype, write the code,
+								| test and launch the project. We work with Bitrix, WordPress, OpenCart, MODX, Shopify,
+								| Tilda. However, we always try to offer a site content management system of our own design — G-ENGINE.
+							h2.main-title.item(data-click='front:chooseBlock')
+								span How does it works?
+							p.main-text.item(data-click='front:chooseBlock')
+								| ShopiApp — fullstack is a web technology company. We solve the problems of clients who are looking
+								| for how to post information about themselves on the Internet. Whether it's an ordinary one-page
+								| website or a large portal with complex functionality and an application.
+							p.main-text.item(data-click='front:chooseBlock')
+								| We also develop applications for popular e-commerce platforms.
+								| We will create the design ourselves, make a prototype, write the code,
+								| test and launch the project. We work with Bitrix, WordPress, OpenCart, MODX, Shopify,
+								| Tilda. However, we always try to offer a site content management system of our own design — G-ENGINE.
