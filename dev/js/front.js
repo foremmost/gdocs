@@ -17,7 +17,8 @@ class Front extends _front{
       .on(_,'deleteBlock')
       .on(_,'chooseBlock')
       .on(_,'chooseMenuItem')
-      .on(_,'removeChoosedMark');
+      .on(_,'removeChoosedMark')
+      .on(_,'addCategory');
 	  _.direction= 'up';
 		_.currentItem = null;
   }
@@ -165,14 +166,38 @@ class Front extends _front{
 			</code>
 		`;
 	}
-	
-  init(){
+
+	addCategory({item}){
+		const _ = this;
+		item.parentNode.parentNode.querySelector('.action-button').classList.add('pressed');
+		item.parentNode.parentNode.querySelector('.action-button img').src ='/img/save.svg';
+		item.setAttribute('contenteditable',true);
+		item.contenteditable = true;
+		item.textContent = '';
+		item.classList.add('aside-inpt');
+	}
+	async saveCategory(){
+		const _ = this;
+		let rawResponse = await fetch('http://localhost:4800/api/createCategory.php',{
+			method: 'POST',
+			headers:{
+				"Content-Type": "application/json"
+			},
+			body:JSON.stringify({
+				title: 'Test category'
+			})
+		})
+		console.log(await rawResponse.json())
+	}
+
+  async init(){
     const _ = this;
-
-
     _._( ()=>{},[
       'test'
     ])
+
+
+
 
   }
 
