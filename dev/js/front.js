@@ -192,10 +192,32 @@ class Front extends _front{
 		`;
 	}
 	
+
+	addCategory({item}){
+		const _ = this;
+		item.parentNode.parentNode.querySelector('.action-button').classList.add('pressed');
+		item.parentNode.parentNode.querySelector('.action-button img').src ='/img/save.svg';
+		item.setAttribute('contenteditable',true);
+		item.contenteditable = true;
+		item.textContent = '';
+		item.classList.add('aside-inpt');
+	}
+	async saveCategory(){
+		const _ = this;
+		let rawResponse = await fetch('http://localhost:4800/api/createCategory.php',{
+			method: 'POST',
+			headers:{
+				"Content-Type": "application/json"
+			},
+			body:JSON.stringify({
+				title: 'Test category'
+			})
+		})
+		console.log(await rawResponse.json())
+	}
+
   async init(){
     const _ = this;
-
-
     _._( ()=>{},[
       'test'
     ])
@@ -205,12 +227,7 @@ class Front extends _front{
 		for(let category of categories){
 			aside.append(_.markup(_.asideCatTpl(category)));
 		}
-		
-		
-		
   }
-	
-	
 	async getCategories(){
 		const _ = this;
 		let rawResponse = await fetch(`${env.backendUrl}/handler.php?action=getCategories`,{
