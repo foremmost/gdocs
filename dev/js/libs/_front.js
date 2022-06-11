@@ -17,7 +17,6 @@ export class _front extends G_G{
     //
    
     //
-    _.init();
   }
 	define(){}
   formDataCapture(form){

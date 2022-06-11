@@ -1,5 +1,7 @@
 import { G_Bus } from "./libs/G_Control.js";
 import { _front } from "./libs/_front.js";
+import { env } from "./env.js";
+
 class Front extends _front{
   constructor(){
     super();
@@ -17,7 +19,8 @@ class Front extends _front{
       .on(_,'deleteBlock')
       .on(_,'chooseBlock')
       .on(_,'chooseMenuItem')
-      .on(_,'removeChoosedMark');
+      .on(_,'removeChoosedMark')
+      .on(_,'addCategory');
 	  _.direction= 'up';
 		_.currentItem = null;
   }
@@ -166,16 +169,95 @@ class Front extends _front{
 		`;
 	}
 	
-  init(){
+	asideCatTpl({title}){
+		const _ = this;
+		return `
+		<div class="aside-block">
+			<h3 class="aside-title" data-click="front:chooseMenuItem"><span class="aside-actions">
+				<button class="action-button">
+					<img src="img/pluscircle.svg" alt="">
+				</button>
+				<div class="aside-actions-list show">
+					<button class="aside-btn" type="button" data-click="front:addCategory">Add category</button>
+					<button class="aside-btn" type="button">Add page</button>
+				</div>
+				</span>
+				<em>${title}</em>
+			</h3>
+			<ul class="aside-links">
+				<li><a href="#">Authorization</a></li>
+				<li><a href="#">Permissions</a></li>
+			</ul>
+		</div>
+		`;
+	}
+	
+  async init(){
     const _ = this;
 
 
     _._( ()=>{},[
       'test'
     ])
-
+	  let categories = await _.getCategories();
+	  let aside = _.f('.aside');
+	  _.clear(aside);
+		for(let category of categories){
+			aside.append(_.markup(_.asideCatTpl(category)));
+		}
+		
+		
+		
   }
-
+	
+	
+	async getCategories(){
+		const _ = this;
+		let rawResponse = await fetch(`${env.backendUrl}/handler.php?action=getCategories`,{
+			method: 'GET',
+		});
+		return await rawResponse.json();
+	}
+	async getCategory(){
+		const _ = this;
+		let rawResponse = await fetch(`${env.backendUrl}/handler.php?action=getCategory&id=1`,{
+			method: 'GET',
+		});
+		console.log(await rawResponse.json());
+	}
+	addCategory({item}){
+		const _ = this;
+		let categoryTitle = prompt('Adding main category');
+		if(!categoryTitle) return void 0;
+		_.saveCategory({title: categoryTitle});
+	}
+	
+	//*  Model functions   *//
+	async saveCategory({title,description=null}){
+		const _ = this;
+		let rawResponse = await fetch(`${env.backendUrl}/handler.php`,{
+			method: 'POST',
+			body:JSON.stringify({
+				action: 'saveCategory',
+				data:{
+					'title': title,
+					'description': description,
+				}
+			})
+		});
+		console.log(await rawResponse.text());
+	}
+	
+	
+	//*  Model functions   *//
+	
+	
+	async testQuery(){
+		const _ = this;
+		
+	
+		
+	}
 }
 new Front();
 
