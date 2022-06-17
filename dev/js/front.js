@@ -20,9 +20,13 @@ class Front extends _front{
       .on(_,'chooseBlock')
       .on(_,'chooseMenuItem')
       .on(_,'removeChoosedMark')
-      .on(_,'addCategory');
+      .on(_,'addCategory')
+      .on(_,'changePageFromCatChild');
 	  _.direction= 'up';
 		_.currentItem = null;
+		_.set({
+			catId: -1
+		})
   }
 	isUp(){
 		return this.direction == 'up';
@@ -168,31 +172,6 @@ class Front extends _front{
 			</code>
 		`;
 	}
-	
-	asideCatTpl({title}){
-		const _ = this;
-		return `
-		<div class="aside-block">
-			<h3 class="aside-title" data-click="front:chooseMenuItem"><span class="aside-actions">
-				<button class="action-button">
-					<img src="img/pluscircle.svg" alt="">
-				</button>
-				<div class="aside-actions-list show">
-					<button class="aside-btn" type="button" data-click="front:addCategory">Add category</button>
-					<button class="aside-btn" type="button">Add page</button>
-				</div>
-				</span>
-				<em>${title}</em>
-			</h3>
-			<ul class="aside-links">
-				<li><a href="#">Authorization</a></li>
-				<li><a href="#">Permissions</a></li>
-			</ul>
-		</div>
-		`;
-	}
-	
-
 	addCategory({item}){
 		const _ = this;
 		item.parentNode.parentNode.querySelector('.action-button').classList.add('pressed');
@@ -204,7 +183,7 @@ class Front extends _front{
 	}
 	async saveCategory(){
 		const _ = this;
-		let rawResponse = await fetch('http://localhost:4800/api/createCategory.php',{
+		let rawResponse = await fetch(`${_.backendUrl}/createCategory.php`,{
 			method: 'POST',
 			headers:{
 				"Content-Type": "application/json"
@@ -213,26 +192,117 @@ class Front extends _front{
 				title: 'Test category'
 			})
 		})
+		
 		console.log(await rawResponse.json())
 	}
-
-  async init(){
-    const _ = this;
-    _._( ()=>{},[
+	
+	asideCatTpl({id,title,children}){
+		const _ = this;
+		return `
+			<div class="aside-block">
+				<h3 class="aside-title" data-click="front:chooseMenuItem"><span class="aside-actions">
+					<button class="action-button">
+						<img src="img/pluscircle.svg" alt="">
+					</button>
+					<div class="aside-actions-list show">
+						<button class="aside-btn" type="button" data-click="front:addCategory">Add category</button>
+						<button class="aside-btn" type="button">Add page</button>
+					</div>
+					</span>
+					<em>${title}</em>
+				</h3>
+				<ul class="aside-links">
+					${_.childrenCatTpl(children)}
+				</ul>
+			</div>
+		`;
+	}
+	childrenCatTpl(children){
+		const _ = this;
+		let li = '';
+		for(let child of children){
+			li+=`<li>
+				<a href="#" data-id="${child['id']}" data-click="front:changePageFromCatChild">${child['title']}</a>
+			</li>`;
+		}
+		return li;
+	}
+	
+	emptyTpl(){
+		const _ = this;
+		return `
+			<div class="item-actions empty">
+				<button class="action-button active" data-click="front:addBlock" direction="up">
+					<img src="img/pluscircle.svg" alt="">
+				</button>
+			</div>
+		`;
+	}
+	
+	async init(){
+		const _ = this;
+		_._( ()=>{},[
       'test'
     ])
-	  let categories = await _.getCategories();
-	  let aside = _.f('.aside');
-	  _.clear(aside);
+		let
+			categories = await _.getCategories(),
+			aside = _.f('.aside');
+		_.clear(aside);
 		for(let category of categories){
-			aside.append(_.markup(_.asideCatTpl(category)));
+			aside.append( _.markup(_.asideCatTpl(category)));
 		}
-  }
+		_.clear(_.f('#content'));
+		_._( ()=>{
+			if(!_.initedUpdate){
+				_.content  = _.f('#content');
+				_.content.append(_.markup(_.emptyTpl()));
+				console.log('Inited');
+			}
+		});
+		_._( async ()=>{
+			if(!_.initedUpdate){
+				return void 0;
+			}
+			let
+				rawContent = await _.getContent(_._$.catId),
+				content = rawContent['content'];
+			_.clear(_.content);
+			_.content.append(_.markup(content));
+			
+		},['catId']);
+		
+	}
+	changePageFromCatChild({item}){
+		const _ = this;
+		_.set({
+			catId: parseInt(item.getAttribute('data-id'))
+		})
+	}
+	async updateContent(id,content){
+		const _ = this;
+		let rawResponse = await fetch(`${env.backendUrl}/handler.php?action=getContent&id=${id}`,{
+			method: 'POST',
+			body:{
+				"id": id,
+				"content": content
+			}
+		});
+		console.log(await rawResponse.text());
+		return await rawResponse.json();
+	}
+	async getContent(id){
+		const _ = this;
+		let rawResponse = await fetch(`${env.backendUrl}/handler.php?action=getContent&id=${id}`,{
+			method: 'GET',
+		});
+		return await rawResponse.json();
+	}
 	async getCategories(){
 		const _ = this;
 		let rawResponse = await fetch(`${env.backendUrl}/handler.php?action=getCategories`,{
 			method: 'GET',
 		});
+	
 		return await rawResponse.json();
 	}
 	async getCategory(){
