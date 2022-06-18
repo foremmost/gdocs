@@ -3,39 +3,41 @@ import { _front } from "./libs/_front.js";
 import { env } from "./env.js";
 
 class Front extends _front{
-  constructor(){
-    super();
-    const _ = this;
-     //G_Bus
-  }
-  define(){
-    const _ =  this;
+	constructor(){
+	super();
+	const _ = this;
+	 //G_Bus
+	}
+	define(){
+		const _ =	this;
 
-    _.componentName = 'front'
-    G_Bus
-      .on(_,'addItem')
-      .on(_,'addBlock')
-      .on(_,'editBlock')
-      .on(_,'deleteBlock')
-      .on(_,'chooseBlock')
-      .on(_,'chooseMenuItem')
-      .on(_,'removeChoosedMark')
-      .on(_,'addCategory')
-      .on(_,'changePageFromCatChild');
-	  _.direction= 'up';
+		_.componentName = 'front'
+		G_Bus
+			.on(_,'addItem')
+			.on(_,'addBlock')
+			.on(_,'editBlock')
+			.on(_,'deleteBlock')
+			.on(_,'chooseBlock')
+			.on(_,'chooseMenuItem')
+			.on(_,'removeChoosedMark')
+			.on(_,'addCategory')
+			.on(_,'changePageFromCatChild')
+			.on(_,'saveBlock')
+			.on(_,'inputContent');
+		_.direction= 'up';
 		_.currentItem = null;
 		_.set({
 			catId: -1
 		})
-  }
+	}
 	isUp(){
 		return this.direction == 'up';
 	}
 	addItem({item}){
 		const _ = this;
 		let
-			type = item.getAttribute('type');
-		let tpl = _[`${type}Tpl`](); //titleTpl textTpl
+			type = item.getAttribute('type'),
+			tpl = _[`${type}Tpl`](); //titleTpl textTpl
 		_.removeChoosedMark();
 		if(_.isUp()){
 			_.currentItem.before(_.markup(tpl))
@@ -51,7 +53,7 @@ class Front extends _front{
 			action.parentNode.classList.remove('edited');
 			action.remove();
 		}
-		let actions = _.f('.item-actions');
+		let actions = _.f('.item-actions:not(.empty)');
 	
 		if(actions){
 			if(!actions.length){
@@ -61,7 +63,6 @@ class Front extends _front{
 					handle(action);
 				}
 			}
-			
 		}
 	}
 	chooseBlock({item}){
@@ -76,31 +77,45 @@ class Front extends _front{
 			item.prepend(_.markup(_.actionsTpl()));
 		}
 	}
-  addBlock({item, event}){
-    const _ = this;
-    let
-      cont = item.parentNode,
-      direction = item.getAttribute('direction');
-		_.direction = direction;
-		_.currentItem = cont.parentNode;
-		if(cont.querySelector('.action-list'))
-	  cont.querySelector('.action-list').remove();
+	addBlock({item, event}){
+		const _ = this;
+		let
+			cont = item.parentNode,
+			direction = item.getAttribute('direction');
+			_.direction = direction;
+			if(!cont.classList.contains('empty')){
+				_.currentItem = cont.parentNode;
+			}else{
+				_.currentItem = cont;
+			}
+			
+		if(cont.querySelector('.action-list')) cont.querySelector('.action-list').remove();
 		cont.append(_.markup(_.actionsBlockTpl(direction)));
-  }
-  editBlock({item}){
-    const _ = this;
-    let cont = item.parentNode.parentNode.parentNode;
-    cont.setAttribute('contenteditable',true);
+	}
+	editBlock({item}){
+		const _ = this;
+		let cont = item.parentNode.parentNode.parentNode;
+		cont.setAttribute('contenteditable',true);
 		item.classList.add('pressed');
 		item.querySelector('img').src= '/img/save.svg';
-		item.setAttribute('data-click','saveBlock');
-  }
-  deleteBlock({item}){
-    const _ = this;
-    let cont = item.parentNode.parentNode.parentNode;
+		item.setAttribute('data-click',`${_.componentName}:saveBlock`);
+	}
+	deleteBlock({item}){
+		const _ = this;
+		let cont = item.parentNode.parentNode.parentNode;
 		cont.remove();
-  }
-
+		_.saveBlock();
+	}
+	async saveBlock(){
+		const _ = this;
+		let
+			contentHtml = '',
+			clonedNode = _.content.cloneNode(true);
+		_.removeHandlers(clonedNode);
+		contentHtml = clonedNode.innerHTML;
+		let rawResponse = await _.updateContent(contentHtml);
+		_.removeChoosedMark();
+	}
 
 	//
 	chooseMenuItem({item}){
@@ -131,36 +146,38 @@ class Front extends _front{
 	actionsBlockTpl(){
 		const _ = this;
 		return `
-      <span class="action-list active ${_.direction}">
-        <button class="action-list-item" data-click="${_.componentName}:addItem" type="title">
-          <img src="/img/title.svg" title="Add title">
-				</button>
-        <button class="action-list-item" data-click="${_.componentName}:addItem" type="text">
-          <img src="/img/text.svg" title="Add text">
-				</button>
-        <button class="action-list-item">
-          <img src="/img/image.svg" title="Add image">
-				</button>
-        <button class="action-list-item" data-click="${_.componentName}:addItem" type="code">
-          <img src="/img/code.svg" title="Add code">
-				</button>
-      </span>`;
+			<span class="action-list active ${_.direction}">
+			<button class="action-list-item" data-click="${_.componentName}:addItem" type="title">
+				<img src="/img/title.svg" title="Add title">
+					</button>
+			<button class="action-list-item" data-click="${_.componentName}:addItem" type="text">
+				<img src="/img/text.svg" title="Add text">
+					</button>
+			<button class="action-list-item">
+				<img src="/img/image.svg" title="Add image">
+					</button>
+			<button class="action-list-item" data-click="${_.componentName}:addItem" type="code">
+				<img src="/img/code.svg" title="Add code">
+					</button>
+			</span>`;
 	}
 	titleTpl(text){
 		const _ = this;
 		return `
-			<h2 class="main-title item" data-click='${_.componentName}:chooseBlock'>
-				<span>Enter Yours title</span>
-			</h2>  
+			<h2 class="main-title item" data-click='${_.componentName}:chooseBlock' data-keydown="${_.componentName}:inputContent">
+				<span class="item-content">Enter Yours title</span>
+			</h2>	
 		`;
 	}
 	textTpl(text){
 		const _ = this;
 		return `
-			<p class="main-text item" data-click='${_.componentName}:chooseBlock'>
-				We also develop applications for popular e-commerce platforms. We will create the design ourselves, make a prototype, write the code,
-				test and launch the project. We work with Bitrix, WordPress, OpenCart, MODX, Shopify, Tilda.
-				However, we always try to offer a site content management system of our own design — G-ENGINE.
+			<p class="main-text item" data-click='${_.componentName}:chooseBlock' data-keydown="${_.componentName}:inputContent">
+				<span class="item-content">
+					We also develop applications for popular e-commerce platforms. We will create the design ourselves, make a prototype, write the code,
+					test and launch the project. We work with Bitrix, WordPress, OpenCart, MODX, Shopify, Tilda.
+					However, we always try to offer a site content management system of our own design — G-ENGINE.
+				</span>
 			</p>
 		`;
 	}
@@ -181,21 +198,6 @@ class Front extends _front{
 		item.textContent = '';
 		item.classList.add('aside-inpt');
 	}
-	async saveCategory(){
-		const _ = this;
-		let rawResponse = await fetch(`${_.backendUrl}/createCategory.php`,{
-			method: 'POST',
-			headers:{
-				"Content-Type": "application/json"
-			},
-			body:JSON.stringify({
-				title: 'Test category'
-			})
-		})
-		
-		console.log(await rawResponse.json())
-	}
-	
 	asideCatTpl({id,title,children}){
 		const _ = this;
 		return `
@@ -239,56 +241,52 @@ class Front extends _front{
 		`;
 	}
 	
-	async init(){
-		const _ = this;
-		_._( ()=>{},[
-      'test'
-    ])
-		let
-			categories = await _.getCategories(),
-			aside = _.f('.aside');
-		_.clear(aside);
-		for(let category of categories){
-			aside.append( _.markup(_.asideCatTpl(category)));
-		}
-		_.clear(_.f('#content'));
-		_._( ()=>{
-			if(!_.initedUpdate){
-				_.content  = _.f('#content');
-				_.content.append(_.markup(_.emptyTpl()));
-				console.log('Inited');
-			}
-		});
-		_._( async ()=>{
-			if(!_.initedUpdate){
-				return void 0;
-			}
-			let
-				rawContent = await _.getContent(_._$.catId),
-				content = rawContent['content'];
-			_.clear(_.content);
-			_.content.append(_.markup(content));
-			
-		},['catId']);
-		
-	}
+	
 	changePageFromCatChild({item}){
 		const _ = this;
 		_.set({
 			catId: parseInt(item.getAttribute('data-id'))
 		})
 	}
-	async updateContent(id,content){
+	async updateContent(content){
 		const _ = this;
-		let rawResponse = await fetch(`${env.backendUrl}/handler.php?action=getContent&id=${id}`,{
+		let rawResponse = await fetch(`${env.backendUrl}/handler.php`,{
 			method: 'POST',
-			body:{
-				"id": id,
-				"content": content
-			}
+			body:JSON.stringify({
+				"action": "updateContent",
+				"data": {
+					"id": _._$.contentId,
+					"content": content,
+					"cat_id": _._$.catId
+				}
+			})
 		});
-		console.log(await rawResponse.text());
 		return await rawResponse.json();
+	}
+	async insertContent(content){
+		const _ = this;
+		let rawResponse = await fetch(`${env.backendUrl}/handler.php`,{
+			method: 'POST',
+			body:JSON.stringify({
+				"action": "insertContent",
+				"data": {
+					"id": _._$.contentId,
+					"content": content,
+					"cat_id": _._$.catId
+				}
+			})
+		});
+		return await rawResponse.json();
+	}
+	inputContent({item,event}){
+		const _ = this;
+		let itemContent=	item.querySelector('.item-content');
+		if(!itemContent) return void 0;
+		if ( (itemContent.innerText.length) < 2 && (event.key == 'Backspace') ) { // last element is empty
+			itemContent.innerHTML = "&ZeroWidthSpace;";
+			event.preventDefault();
+			return void 0;
+		}
 	}
 	async getContent(id){
 		const _ = this;
@@ -319,7 +317,7 @@ class Front extends _front{
 		_.saveCategory({title: categoryTitle});
 	}
 	
-	//*  Model functions   *//
+	//*	Model functions	 *//
 	async saveCategory({title,description=null}){
 		const _ = this;
 		let rawResponse = await fetch(`${env.backendUrl}/handler.php`,{
@@ -336,15 +334,81 @@ class Front extends _front{
 	}
 	
 	
-	//*  Model functions   *//
+	//*	Model functions	 *//
 	
 	
-	async testQuery(){
+	hangHandlers(){
 		const _ = this;
-		
+		let
+			titles = _.content.querySelectorAll('.main-title'),
+			texts	= _.content.querySelectorAll('.main-text'),
+			items = [];
+		if(titles.length){
+			items = items.concat([...titles]);
+		}
+		if(texts.length){
+			items =	items.concat([...texts]);
+		}
+		for(let item of items){
+			if(!item.hasAttribute('data-click')){
+				item.setAttribute('data-click',`${_.componentName}:chooseBlock`)
+			}
+		}
+	}
+	removeHandlers(content){
+		const _ = this;
+		let actions = content.querySelector('.item-actions');
+		actions.remove();
+		let
+			handlers = content.querySelectorAll("[data-click]");
+		for(let item of handlers){
+			item.removeAttribute('data-click');
+			item.removeAttribute('data-keydown');
+			item.removeAttribute('contenteditable');
+			item.classList.remove('item');
+			item.classList.remove('edited');
+		}
+	}
 	
+	async init(){
+		const _ = this;
+		let
+			categories = await _.getCategories(),
+			aside = _.f('.aside');
+		_.clear(aside);
+		for(let category of categories){
+			aside.append( _.markup(_.asideCatTpl(category)));
+		}
+		_.clear(_.f('#content'));
+		_._( ()=>{
+			if(!_.initedUpdate){
+				_.content	= _.f('#content');
+				_.content.append(_.markup(_.emptyTpl()));
+				console.log('Inited');
+			}
+		});
+		_._( async ()=>{
+			if(!_.initedUpdate){
+				return void 0;
+			}
+			let
+				rawContent = await _.getContent(_._$.catId),
+				content = rawContent['content'];
+			
+			_.set({
+				contentId: rawContent['id']
+			});
+			
+			_.clear(_.content);
+			_.content.append(_.markup(content));
+			if(!content){
+				_.content.append(_.markup(_.emptyTpl()));
+			}
+			_.hangHandlers();
+		},['catId']);
 		
 	}
 }
+
 new Front();
 

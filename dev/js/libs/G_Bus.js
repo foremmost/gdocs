@@ -68,8 +68,6 @@ class _G_Bus {
 						border-left:2px solid #FF6F6F;color:rgba(255, 255, 255, 0.6);
 					`;
 				//	if(e.name == 'TypeError'){
-
-
 				console.log(`%c%s`,styles,`Error in ${componentName}:${eventName}\n${error}\n${handle}`);
 				//	}
 			}

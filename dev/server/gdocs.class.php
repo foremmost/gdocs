@@ -51,13 +51,18 @@ class Gdocs {
 	public function updateContent($request){
 		$catId = $this->db->update([
 			'tableName' => 'pages',
-			'insertData' => $request,
-			'fieldsToInsert' => [
+			'updateData' => $request,
+			'fieldsToUpdate' => [
 				['s' => 'content'],
 				['s' => 'description']
-			]
+			],
+			'condition'=> ' WHERE `id` = ?',
+			'conditionFields'=>[['id'=>'i']]
 		]);
-		return  $this->db->get('pages','content',"cat_id = {$request['id']}");
+		return  [
+			"status" => "success",
+			"data"   => $catId
+		];
 	}
 
 }

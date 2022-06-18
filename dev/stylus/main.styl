@@ -229,11 +229,14 @@ body
       +tablet()
         margin-top @margin-top*2
   &-title
+    margin-top 60px
     text-transform uppercase
     font 36px var(--fBold)
-    margin-top 60px
+
     +tablet()
       margin-top @margin-top*2
+
+
   &-text
     max-width 880px
     color RGBA(var(--black),.4)
@@ -283,10 +286,15 @@ body
     &.empty
       margin-top 90px
 .edited
+  df({
+    df: 'main-title',
+    ali: 'center',
+    jus: 'flex-start'
+  })
+  min-height 50px
   position relative
   background-color #eee
-  position relative
-  //padding 20px 0
+  padding-left: 10px
   border-top 2px dashed RGBA(var(--black),.2)
   border-bottom @border-top
   .action-button.active
